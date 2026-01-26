@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDS Document Extraction & Mapping</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="12" fill="url(#gradient)"/>
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="logo-text">
+                        <h1>SmartAudit</h1>
+                        <p>TDS Document Extraction</p>
+                    </div>
+                </div>
+                <div class="header-stats" id="headerStats">
+                    <div class="stat-item">
+                        <span class="stat-label">Documents Processed</span>
+                        <span class="stat-value" id="totalDocs">0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <div class="upload-icon">
+                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                            <circle cx="40" cy="40" r="40" fill="url(#uploadGradient)" opacity="0.1"/>
+                            <path d="M40 20V50M40 20L30 30M40 20L50 30" stroke="url(#uploadGradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M25 50V55C25 57.7614 27.2386 60 30 60H50C52.7614 60 55 57.7614 55 55V50" stroke="url(#uploadGradient)" stroke-width="4" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="uploadGradient" x1="0" y1="0" x2="80" y2="80">
+                                    <stop offset="0%" stop-color="#667eea"/>
+                                    <stop offset="100%" stop-color="#764ba2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <h2>Upload Documents</h2>
+                    <p class="upload-description">Drag and drop your files here, or click to browse</p>
+                    <p class="upload-formats">Supports: PDF, DOCX, Excel, Images, ZIP archives</p>
+                    
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg,.bmp,.tiff,.zip" multiple hidden>
+                        <div class="upload-zone-content">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <path d="M24 12V32M24 12L16 20M24 12L32 20" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 32V36C12 38.2091 13.7909 40 16 40H32C34.2091 40 36 38.2091 36 36V32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                            <p>Drop files here or <span class="browse-link">browse</span></p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" id="uploadBtn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4V14M10 4L6 8M10 4L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 14V16C4 17.1046 4.89543 18 6 18H14C15.1046 18 16 17.1046 16 16V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Upload & Extract
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading Section -->
+            <section class="loading-section hidden" id="loadingSection">
+                <div class="loading-card">
+                    <div class="spinner"></div>
+                    <h3>Processing Documents...</h3>
+                    <p id="loadingStatus">Extracting data from your documents</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section hidden" id="resultsSection">
+                <div class="results-header">
+                    <h2>Extracted Data</h2>
+                    <button class="btn-secondary" id="newUploadBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M4 10H16M10 4V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        New Upload
+                    </button>
+                </div>
+                
+                <div class="results-container" id="resultsContainer">
+                    <!-- Results will be dynamically inserted here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

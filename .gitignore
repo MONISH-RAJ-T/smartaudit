@@ -1,0 +1,20 @@
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Large Files
+input.zip
+extracted_data.json
+
+# Frontend dependencies (if you ever use npm)
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
