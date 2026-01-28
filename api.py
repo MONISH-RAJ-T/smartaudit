@@ -14,6 +14,26 @@ import shutil
 from pathlib import Path
 from typing import List, Dict, Any
 import logging
+import math
+
+def clean_json_data(data):
+    """Recursively replace NaN and Infinity with None/String for JSON compliance"""
+    if isinstance(data, list):
+        return [clean_json_data(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: clean_json_data(v) for k, v in data.items()}
+    elif isinstance(data, float):
+        if math.isnan(data) or math.isinf(data):
+            return ""
+    return data
+
+def safe_delete(path):
+    """Safely delete a file with error logging"""
+    try:
+        if os.path.exists(path):
+            os.unlink(path)
+    except Exception as e:
+        logger.warning(f"Could not delete temp file {path}: {e}")
 
 from tds_challan_extractor import (
     extract_document,
@@ -125,13 +145,15 @@ async def upload_file(file: UploadFile = File(...)):
                 if os.path.exists("temp_extracted"):
                     shutil.rmtree("temp_extracted", ignore_errors=True)
                 
-                return JSONResponse(content={
+
+                
+                return JSONResponse(content=clean_json_data({
                     "status": "success",
                     "file_name": file.filename,
                     "file_type": "zip",
                     "total_documents": len(results),
                     "documents": results
-                })
+                }))
             
             else:
                 # Process single file
@@ -143,18 +165,20 @@ async def upload_file(file: UploadFile = File(...)):
                         detail="Failed to extract data from document"
                     )
                 
-                return JSONResponse(content={
+
+                
+                return JSONResponse(content=clean_json_data({
                     "status": "success",
                     "file_name": file.filename,
                     "file_type": get_file_type(tmp_path),
                     "total_documents": 1,
                     "documents": [result]
-                })
+                }))
         
         finally:
             # Cleanup temp file
             if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+                safe_delete(tmp_path)
     
     except HTTPException:
         raise
@@ -210,7 +234,7 @@ async def upload_multiple_files(files: List[UploadFile] = File(...)):
                         })
                 finally:
                     if os.path.exists(tmp_path):
-                        os.unlink(tmp_path)
+                        safe_delete(tmp_path)
             
             except Exception as e:
                 logger.error(f"Error processing {file.filename}: {e}")
@@ -220,12 +244,14 @@ async def upload_multiple_files(files: List[UploadFile] = File(...)):
                     "status": "failed"
                 })
         
-        return JSONResponse(content={
+
+        
+        return JSONResponse(content=clean_json_data({
             "status": "success",
             "total_files": len(files),
             "total_processed": len([r for r in results if "pages" in r]),
             "documents": results
-        })
+        }))
     
     except HTTPException:
         raise

@@ -1,20 +1,10 @@
-# FastAPI and Server
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
-
-# Document Processing
-PyMuPDF==1.23.8
-camelot-py[cv]==0.11.0
+# Core Extraction Logic
 paddleocr==2.7.0.3
+camelot-py[cv]==0.11.0
 python-docx==1.1.0
-openpyxl==3.1.2
 pandas==2.1.4
+openpyxl==3.1.2
 
-# Image Processing (for OCR and Camelot)
-opencv-python==4.9.0.80
-Pillow==10.2.0
-
-# Additional Dependencies
-numpy==1.26.3
-ghostscript==0.7
+# Constraints for paddleocr
+opencv-python<=4.6.0.66
+PyMuPDF<1.21.0

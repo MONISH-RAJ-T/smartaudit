@@ -19,6 +19,7 @@ import logging
 import tempfile
 import time
 from typing import List, Dict, Any
+import openpyxl
 
 # ---------- WINDOWS-SAFE LOGGING ----------
 logging.basicConfig(
@@ -119,7 +120,9 @@ def extract_tables_with_fallback(file_path, file_type, page_num=None):
                 camelot_tables = camelot.read_pdf(file_path, pages="all", flavor="lattice")
             
             for t in camelot_tables:
-                table_data = t.df.values.tolist()
+                df = t.df.fillna("")
+                # Convert to strings to preserve formatting
+                table_data = [[str(cell) if cell != "" else "" for cell in row] for row in df.values.tolist()]
                 if table_data and len(table_data) > 1:
                     tables.append(table_data)
         except:
@@ -133,7 +136,9 @@ def extract_tables_with_fallback(file_path, file_type, page_num=None):
                     camelot_tables = camelot.read_pdf(file_path, pages="all", flavor="stream")
                 
                 for t in camelot_tables:
-                    table_data = t.df.values.tolist()
+                    df = t.df.fillna("")
+                    # Convert to strings to preserve formatting
+                    table_data = [[str(cell) if cell != "" else "" for cell in row] for row in df.values.tolist()]
                     if table_data and len(table_data) > 1:
                         tables.append(table_data)
             except:
@@ -142,8 +147,9 @@ def extract_tables_with_fallback(file_path, file_type, page_num=None):
     elif file_type == "excel":
         try:
             df = pd.read_excel(file_path, sheet_name=0)
-            table_data = df.values.tolist()
-            header = df.columns.tolist()
+            # Convert to strings to preserve formatting
+            header = [str(col) for col in df.columns.tolist()]
+            table_data = [[str(cell) if not pd.isna(cell) else "" for cell in row] for row in df.values.tolist()]
             if table_data:
                 tables.append([header] + table_data)
         except:
@@ -161,12 +167,18 @@ def extract_digital_pdf(pdf_path):
         try:
             camelot_tables = camelot.read_pdf(pdf_path, pages="all", flavor="lattice")
             for t in camelot_tables:
-                tables_by_page[t.page].append(t.df.values.tolist())
+                df = t.df.fillna("")
+                # Convert to strings to preserve formatting
+                table_data = [[str(cell) if cell != "" else "" for cell in row] for row in df.values.tolist()]
+                tables_by_page[t.page].append(table_data)
         except:
             try:
                 camelot_tables = camelot.read_pdf(pdf_path, pages="all", flavor="stream")
                 for t in camelot_tables:
-                    tables_by_page[t.page].append(t.df.values.tolist())
+                    df = t.df.fillna("")
+                    # Convert to strings to preserve formatting
+                    table_data = [[str(cell) if cell != "" else "" for cell in row] for row in df.values.tolist()]
+                    tables_by_page[t.page].append(table_data)
             except:
                 pass
         
@@ -265,13 +277,74 @@ def extract_docx(docx_path):
 def extract_excel(excel_path):
     """Extract Excel"""
     try:
+        if isinstance(excel_path, str):
+            wb = openpyxl.load_workbook(excel_path, data_only=False, read_only=True)
+        else:
+             # Handle file-like objects if necessary, though current usage ignores this
+             wb = openpyxl.load_workbook(excel_path, data_only=False, read_only=True)
+             
         all_sheets = []
-        excel_file = pd.ExcelFile(excel_path)
         
-        for sheet_name in excel_file.sheet_names:
-            df = pd.read_excel(excel_path, sheet_name=sheet_name)
-            table_data = [df.columns.tolist()] + df.values.tolist()
-            all_sheets.append(table_data)
+        for sheet_name in wb.sheetnames:
+            ws = wb[sheet_name]
+            sheet_data = []
+            
+            # Iterate through rows
+            for row in ws.iter_rows():
+                row_data = []
+                for cell in row:
+                    val = cell.value
+                    if val is None:
+                        row_data.append("")
+                        continue
+
+                    # Handle different value types
+                    if isinstance(val, str):
+                        # String values - preserve as-is
+                        row_data.append(val)
+                    elif isinstance(val, (int, float)):
+                        # Numeric values - check formatting
+                        fmt = cell.number_format
+                        formatted_val = str(val)
+                        
+                        # Check if format is not General and has relevant chars
+                        if fmt and fmt.lower() != 'general':
+                            import re
+                            
+                            # Detect decimal precision from format string
+                            precision_match = re.search(r'\.([0#]+)', fmt)
+                            
+                            # Extract text literals (e.g., "Cr", "Dr") from format
+                            # Format strings can have quoted text like:
+                            # - 0.00 "Cr"
+                            # - ""0.00" Cr" (with empty quotes)
+                            # Find all quoted strings, filter out empty ones
+                            all_quotes = re.findall(r'"([^"]*)"', fmt)
+                            text_literals = [t for t in all_quotes if t]  # Remove empty strings
+                            
+                            if precision_match:
+                                precision = len(precision_match.group(1))
+                                # Format with fixed precision
+                                formatted_val = f"{val:.{precision}f}"
+                            
+                            # Append text literals if found
+                            if text_literals:
+                                # Join all text literals with space
+                                formatted_val = formatted_val + " " + " ".join(text_literals)
+                        
+                        row_data.append(formatted_val)
+                    else:
+                        # Handle other types (dates, booleans, etc.)
+                        row_data.append(str(val))
+                
+                # Check if row has any content
+                if any(row_data):
+                    sheet_data.append(row_data)
+
+            if sheet_data:
+                all_sheets.append(sheet_data)
+        
+        wb.close()
         
         return [{
             "page_no": 1,
